@@ -1,0 +1,37 @@
+:root {
+
+  background-color: #0c0c0c;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+textarea {
+    background-color: #0c0c0c;
+    width: 100vh;
+    resize: none;
+    color: white;
+    font-size: 25px;
+    margin-top: 5px;
+    font-family: 'Roboto Mono', monospace;
+  }
+
+  /*Manage image sizes*/
+.App-logo {
+  width: 20vh;
+}
+
+.App-banner {
+  width: 50vh;
+}
+
+.App-mini-banner {
+  height: 25vh;
+}
