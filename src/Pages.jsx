@@ -20,6 +20,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { authentication, provider } from "./firebase";
 import { scrollToBottom } from "react-scroll/modules/mixins/animate-scroll";
+import openai from 'openai';
 
 function KeepAPIsActive() {
   axios.post(
@@ -258,6 +259,10 @@ export function Twitter() {
   const [sentiment, setSentiment] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
   const [hate, setHate] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
 
+  const openai = new OPENAI({
+    apiKey: import.meta.env.VITE_OPENAI_KEY,
+  });
+
   useEffect(() => {
     const intervalId = setInterval(() => {
       KeepAPIsActive();
@@ -335,18 +340,18 @@ export function Twitter() {
       offset: 50, // Scrolls to element + 50 pixels down the page
     })
 
-    axios.post('https://r3sgame.duckdns.org', {
-      "key": import.meta.env.VITE_LLM_KEY,
-      "text": text
-    })
-    .then(function (response) {
-      setRefinedText(response.data.Tweet)
-      console.log(refinedText)
+    for (let i = 1; i <= 5; i++) {
+      const message = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+              {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
+              {"role": "user", "content": "Refine the tweet below to be more engaging. Its original rate was 0.83%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n "},
+          ]
+      )
+        setRefinedText(tweets => [...tweets, ])
+  }
+
       setLoadState(4)
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
   }
 
   return (
@@ -570,11 +575,7 @@ export function Pricing() {
       </ListItem>
       <ListItem>
         <ListItemIcon><ThumbUpTwoTone/></ListItemIcon>
-        <ListItemText>Base refiner (Vicuna)</ListItemText>
-      </ListItem>
-      <ListItem>
-        <ListItemIcon><ThumbUpTwoTone/></ListItemIcon>
-        <ListItemText>Power refiner (GPT - 200 uses)</ListItemText>
+        <ListItemText>Post refiner (200 uses)</ListItemText>
       </ListItem>
       <ListItem>
         <ListItemIcon><AssessmentTwoTone/></ListItemIcon>
@@ -595,16 +596,12 @@ export function Pricing() {
     
       <Paper variant="outlined" sx={{marginTop: 2, width: '40%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '41%'}}>
         <Fade><Typography variant="h5" sx={{textAlign: 'left'}}>Standard</Typography></Fade>
-        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginBottom: 1}}>The essentials - for free.</Typography></Fade>
+        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginBottom: 1}}>Twitter/Mastodon engagement - for free.</Typography></Fade>
         <Divider/>
         <List>
         <ListItem>
         <ListItemIcon><StarTwoTone/></ListItemIcon>
         <ListItemText>Engagement prediction model</ListItemText>
-      </ListItem>
-      <ListItem>
-        <ListItemIcon><ThumbUpTwoTone/></ListItemIcon>
-        <ListItemText>Base refiner (Vicuna)</ListItemText>
       </ListItem>
       <ListItem>
         <ListItemIcon><LocalOfferTwoTone/></ListItemIcon>
