@@ -20,7 +20,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { authentication, provider } from "./firebase";
 import { scrollToBottom } from "react-scroll/modules/mixins/animate-scroll";
-import openai from 'openai';
+import openai, { OpenAI } from 'openai';
 
 function KeepAPIsActive() {
   axios.post(
@@ -259,8 +259,9 @@ export function Twitter() {
   const [sentiment, setSentiment] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
   const [hate, setHate] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
 
-  const openai = new OPENAI({
+  const openai = new OpenAI({
     apiKey: import.meta.env.VITE_OPENAI_KEY,
+    dangerouslyAllowBrowser: true
   });
 
   useEffect(() => {
@@ -275,7 +276,7 @@ export function Twitter() {
   async function Predict() {
     setLoadState(1);
    try{
-    let model = await tf.loadLayersModel('https://likewise-learn.web.app/models/v0.8js/model.json');
+    /*let model = await tf.loadLayersModel('https://likewise-learn.web.app/models/v0.8js/model.json');
       let extraction = await axios.post('https://r3sgame.duckdns.org', {
         "key": import.meta.env.VITE_EXTRACTOR_KEY,
         "text": text
@@ -286,7 +287,7 @@ export function Twitter() {
       console.log(tensor)
       tensor = await tf.reshape(tf.cast(tensor, 'float32'), [1,770])
       const result = await model.predict(tensor).dataSync()
-      setLikes(result);
+      setLikes(result);*/
       
       
 
@@ -330,7 +331,7 @@ export function Twitter() {
       }
     }
 
-  function RefineTweet() {
+  async function RefineTweet() {
     setLoadState(3);
 
     scroller.scrollTo('secondResult', {
@@ -339,17 +340,17 @@ export function Twitter() {
       smooth: true,
       offset: 50, // Scrolls to element + 50 pixels down the page
     })
-
-    for (let i = 1; i <= 5; i++) {
-      const message = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
+      const message = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
               {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
-              {"role": "user", "content": "Refine the tweet below to be more engaging. Its original rate was 0.83%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n "},
-          ]
-      )
-        setRefinedText(tweets => [...tweets, ])
-  }
+              {"role": "user", "content": `Refine the tweet below to be more engaging. Its original rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${text}`},
+          ],
+          temperature: 0.7
+      })
+      console.log(message.choices[0].message.content)
+      await setRefinedText(tweets => [...tweets, message.choices[0].message.content])
+      console.log(refinedText)
 
       setLoadState(4)
   }
@@ -407,8 +408,7 @@ export function Twitter() {
         <Element name="secondResult">
           {loadState > 2 && <React.Fragment><Paper variant="outlined" sx={{marginTop: 3, width: '30%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '46.5%'}}>
           {loadState == 3 && <React.Fragment><CircularProgress/><Typography variant="body2" color="text.secondary" sx={{marginTop: 1}}>Generating... Please Wait...</Typography></React.Fragment>}
-          {loadState == 4 && <React.Fragment>
-            <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1}}>{refinedText}</Typography></Fade></React.Fragment>}
+          {loadState == 4 && refinedText.map(message => (<Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1}}>{message}</Typography></Fade>))}
           </Paper>
           </React.Fragment>}
           </Element>
