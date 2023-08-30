@@ -265,6 +265,7 @@ export function Twitter() {
   });
 
   useEffect(() => {
+    KeepAPIsActive();
     const intervalId = setInterval(() => {
       KeepAPIsActive();
     }, 60000); // Interval in milliseconds (e.g., 1000ms = 1 second)
@@ -333,6 +334,7 @@ export function Twitter() {
 
   async function RefineTweet() {
     setLoadState(3);
+    setRefinedText([]);
 
     scroller.scrollTo('secondResult', {
       duration: 100,
@@ -340,16 +342,28 @@ export function Twitter() {
       smooth: true,
       offset: 50, // Scrolls to element + 50 pixels down the page
     })
+    const message = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+            {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
+            {"role": "user", "content": `Refine the tweet below to be more engaging. Its original rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${text}`},
+        ],
+        temperature: 0.7
+    }).choices[0].message.content
+
+    await setRefinedText([{index: 0, text: message, engagement: 0.02}]);
+
+    for (let i = 1; i <= 4; i++) {
       const message = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
               {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
-              {"role": "user", "content": `Refine the tweet below to be more engaging. Its original rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${text}`},
+              {"role": "user", "content": `Refine the tweet below to be more engaging. Its original rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${refinedText[refinedText.length - 1].text}`},
           ],
           temperature: 0.7
-      })
-      console.log(message.choices[0].message.content)
-      await setRefinedText(tweets => [...tweets, message.choices[0].message.content])
+      }).choices[0].message.content
+      setRefinedText(prevArray => [...prevArray, {index: refinedText.length, text: message, engagement: 0.02}]);
+  }
       console.log(refinedText)
 
       setLoadState(4)
@@ -408,7 +422,7 @@ export function Twitter() {
         <Element name="secondResult">
           {loadState > 2 && <React.Fragment><Paper variant="outlined" sx={{marginTop: 3, width: '30%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '46.5%'}}>
           {loadState == 3 && <React.Fragment><CircularProgress/><Typography variant="body2" color="text.secondary" sx={{marginTop: 1}}>Generating... Please Wait...</Typography></React.Fragment>}
-          {loadState == 4 && refinedText.map(message => (<Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1}}>{message}</Typography></Fade>))}
+          {loadState == 4 && refinedText.map(message => (<Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1}}>{message.text}</Typography></Fade>))}
           </Paper>
           </React.Fragment>}
           </Element>
