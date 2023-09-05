@@ -23,7 +23,7 @@ import { scrollToBottom } from "react-scroll/modules/mixins/animate-scroll";
 import openai, { OpenAI } from 'openai';
 
 function KeepAPIsActive() {
-  axios.post(
+  const sentiment = axios.post(
     "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment-latest",
     {"inputs": "Hi"},
     {
@@ -35,7 +35,7 @@ function KeepAPIsActive() {
     }
   );
 
-  axios.post(
+  const hate = axios.post(
     "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-hate-latest",
     {"inputs": "Hi"},
     {
@@ -347,7 +347,7 @@ export function Twitter() {
       model: "gpt-3.5-turbo",
       messages: [
             {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
-            {"role": "user", "content": `Refine the tweet below to be more engaging. Its original rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${text}`},
+            {"role": "user", "content": `Refine the tweet below to be more engaging. Its original engagement rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${text}`},
         ],
         temperature: 0.7
     })
@@ -358,18 +358,21 @@ export function Twitter() {
 
     console.log(refinedText)
 
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 2; i++) {
       message = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
               {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
-              {"role": "user", "content": `Refine the tweet below to be more engaging. Its original rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${refinedText[refinedText.length - 1].text}`},
+              {"role": "user", "content": `Refine the tweet below to be more engaging. Its original engagement rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${message.text}`},
           ],
           temperature: 0.7
       })
 
       message = message.choices[0].message.content
-      setRefinedText(prevArray => [...prevArray, {index: refinedText.length, text: message, engagement: 0.02}]);
+
+      let newText = refinedText;
+      newText.push({index: refinedText.length, text: message, engagement: 0.02});
+      setRefinedText(newText);
       console.log(refinedText)
   }
       console.log(refinedText)
