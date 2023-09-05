@@ -255,7 +255,7 @@ export function Twitter() {
   const [text, setText] = useState("");
   const [followers, setFollowers] = useState("");
   const [mediaCount, setMediaCount] = useState("");
-  const [refinedText, setRefinedText] = useState("");
+  const [refinedText, setRefinedText] = useState([]);
   const [sentiment, setSentiment] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
   const [hate, setHate] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
 
@@ -334,8 +334,8 @@ export function Twitter() {
 
   async function RefineTweet() {
     setLoadState(3);
-    setRefinedText([]);
     let message;
+    let iterations = [];
 
     scroller.scrollTo('secondResult', {
       duration: 100,
@@ -343,7 +343,7 @@ export function Twitter() {
       smooth: true,
       offset: 50, // Scrolls to element + 50 pixels down the page
     })
-     message = await openai.chat.completions.create({
+    /* message = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
             {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
@@ -352,14 +352,17 @@ export function Twitter() {
         temperature: 0.7
     })
     console.log(message)
-    message = await message.choices[0].message.content
+    message = await message.choices[0].message.content*/
 
-    await setRefinedText([{index: 0, text: message, engagement: 0.02}]);
+    message = 0;
 
-    console.log(refinedText)
+
+    await iterations.push({index: 0, text: message, engagement: 0.02});
+    setRefinedText(iterations)
+    console.log(iterations)
 
     for (let i = 1; i <= 2; i++) {
-      message = await openai.chat.completions.create({
+      /*message = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
               {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
@@ -368,12 +371,13 @@ export function Twitter() {
           temperature: 0.7
       })
 
-      message = message.choices[0].message.content
+      message = message.choices[0].message.content*/
 
-      let newText = refinedText;
-      newText.push({index: refinedText.length, text: message, engagement: 0.02});
-      setRefinedText(newText);
-      console.log(refinedText)
+      message = iterations.length;
+
+      iterations.push({index: iterations.length, text: message, engagement: 0.02});
+      setRefinedText(iterations);
+      console.log(iterations)
   }
       console.log(refinedText)
 
@@ -432,8 +436,9 @@ export function Twitter() {
 
         <Element name="secondResult">
           {loadState > 2 && <React.Fragment><Paper variant="outlined" sx={{marginTop: 3, width: '30%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '46.5%'}}>
+          {refinedText.map(message => (<><Divider/><Fade><Typography variant="h5" sx={{marginTop: 1, textAlign: 'left'}}>Iteration {message.index}</Typography></Fade><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1, marginBottom: 1}}>{message.text}</Typography></Fade></>))}
           {loadState == 3 && <React.Fragment><CircularProgress/><Typography variant="body2" color="text.secondary" sx={{marginTop: 1}}>Generating... Please Wait...</Typography></React.Fragment>}
-          {loadState == 4 && refinedText.map(message => (<><Divider/><Fade><Typography variant="h5" sx={{marginTop: 1, textAlign: 'left'}}>Iteration {message.index}</Typography></Fade><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1, marginBottom: 1}}>{message.text}</Typography></Fade></>))}
+
           </Paper>
           </React.Fragment>}
           </Element>
