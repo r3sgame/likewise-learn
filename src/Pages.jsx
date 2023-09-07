@@ -343,7 +343,7 @@ export function Twitter() {
       smooth: true,
       offset: 50, // Scrolls to element + 50 pixels down the page
     })
-    /* message = await openai.chat.completions.create({
+    message = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
             {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
@@ -352,9 +352,7 @@ export function Twitter() {
         temperature: 0.7
     })
     console.log(message)
-    message = await message.choices[0].message.content*/
-
-    message = 0;
+    message = await message.choices[0].message.content
 
 
     await iterations.push({index: 0, text: message, engagement: 0.02});
@@ -362,18 +360,16 @@ export function Twitter() {
     console.log(iterations)
 
     for (let i = 1; i <= 2; i++) {
-      /*message = await openai.chat.completions.create({
+      message = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
               {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
-              {"role": "user", "content": `Refine the tweet below to be more engaging. Its original engagement rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${message.text}`},
+              {"role": "user", "content": `Refine the tweet below to be more engaging. Its original engagement rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${message}`},
           ],
           temperature: 0.7
       })
 
-      message = message.choices[0].message.content*/
-
-      message = iterations.length;
+      message = message.choices[0].message.content
 
       iterations.push({index: iterations.length, text: message, engagement: 0.02});
       setRefinedText(iterations);
