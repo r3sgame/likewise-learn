@@ -21,6 +21,10 @@ import { useNavigate } from "react-router-dom";
 import { authentication, provider } from "./firebase";
 import { scrollToBottom } from "react-scroll/modules/mixins/animate-scroll";
 import openai, { OpenAI } from 'openai';
+import { Elements, PaymentElement } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe('pk_test_51NZxrZCKDHE02IcOq0XtXAYg0sAxuzXXpOwgyeMdI76Fvn6WnFxTQS7wDI8FQISddzOnzEtXTSIAljvXtSqH25tw00lST8aNAo');
 
 function KeepAPIsActive() {
   const sentiment = axios.post(
@@ -617,7 +621,7 @@ export function Pricing() {
       </ListItem>
     </List>
         <Divider/>
-        <Button variant="outlined" href="/twitter" sx={{height: 55, marginTop: 2}}><Typography color="inherit" variant="body2">Upgrade</Typography></Button>
+        <Button variant="outlined" href="/checkout" sx={{height: 55, marginTop: 2}}><Typography color="inherit" variant="body2">Upgrade</Typography></Button>
       </Paper>
     
       <Paper variant="outlined" sx={{marginTop: 2, width: '40%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '41%'}}>
@@ -636,5 +640,26 @@ export function Pricing() {
     </List>
       </Paper>
     </React.Fragment>
+  )
+}
+
+export function Checkout() {
+    
+  const options = {
+    // passing the client secret obtained from the server
+    clientSecret: '{{CLIENT_SECRET}}',
+  };
+
+  return(
+    <Elements stripe={stripePromise} options={options}>
+    <Fade><Typography variant="h5" sx={{marginTop: '5%', marginLeft: '22.5%'}}>Checkout</Typography></Fade>
+
+    <Paper variant="outlined" sx={{marginTop: 2, width: '40%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '41%'}}>
+        <Fade><Typography variant="h5" sx={{textAlign: 'left'}}>Plus</Typography></Fade>
+        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginBottom: 1}}>Take your engagement to the next level!</Typography></Fade>
+        <PaymentElement/>
+        <Button variant="outlined" href="/twitter" sx={{height: 55, marginTop: 2}}><Typography color="inherit" variant="body2">Submit</Typography></Button>
+      </Paper>
+    </Elements>
   )
 }
