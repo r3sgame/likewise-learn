@@ -575,14 +575,16 @@ export function Dashboard() {
     <Paper variant="outlined" sx={{marginTop: 1, width: '40%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '41%'}}>
         <Fade><Typography variant="h5" sx={{textAlign: 'left'}}>Nice to see you, {authentication.currentUser.displayName}!</Typography></Fade>
         <Divider/>
-        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1}}>Which platform would you like to refine posts for?</Typography></Fade>
+        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 2}}>Which platform would you like to refine posts for?</Typography></Fade>
         <Button href="/twitter" sx={{marginBottom: 2, marginTop: 2}}><Typography color="inherit" variant="body2">Twitter</Typography></Button>
         <Button href="/mastodon" sx={{marginBottom: 2, marginTop: 2}}><Typography color="inherit" variant="body2">Mastodon</Typography></Button>
         <Divider/>
-        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1}}>Need help? Check out some useful tips and updates.</Typography></Fade>
+        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 2}}>Need help? Check out some useful tips and updates.</Typography></Fade>
         <Link href="https://r3sgame.github.io/likewise-learn-blog/2023/06/15/engagementrate/"><Typography variant="body2" color="inherit" sx={{textAlign: 'left', marginTop: 1}}>Engagment Rate - The Number 1 Social Media Metric</Typography></Link>
         <Link href="https://r3sgame.github.io/likewise-learn-blog/2023/06/09/introduction/"><Typography variant="body2" color="inherit" sx={{textAlign: 'left', marginTop: 1}}>Welcome to the Likewise Learn Blog!</Typography></Link>
-
+        <Divider sx={{marginTop: 2}}/>
+        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1}}>Account Settings:</Typography></Fade>
+        <Link href="https://billing.stripe.com/p/login/4gw29dcS3gh5fuwfYY"><Typography variant="body2" color="inherit" sx={{textAlign: 'left', marginTop: 1}}>Manage Payment Plan (For Premium Users)</Typography></Link>
       </Paper>
     </React.Fragment>
   )
@@ -621,7 +623,7 @@ export function Pricing() {
       </ListItem>
     </List>
         <Divider/>
-        <Button variant="outlined" href="/checkout" sx={{height: 55, marginTop: 2}}><Typography color="inherit" variant="body2">Upgrade</Typography></Button>
+        <Button variant="outlined" href="https://buy.stripe.com/4gw5mYauPeqBbDO3cd" sx={{height: 55, marginTop: 2}}><Typography color="inherit" variant="body2">Upgrade</Typography></Button>
       </Paper>
     
       <Paper variant="outlined" sx={{marginTop: 2, width: '40%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '41%'}}>
@@ -640,26 +642,5 @@ export function Pricing() {
     </List>
       </Paper>
     </React.Fragment>
-  )
-}
-
-export function Checkout() {
-    
-  const options = {
-    // passing the client secret obtained from the server
-    clientSecret: '{{CLIENT_SECRET}}',
-  };
-
-  return(
-    <Elements stripe={stripePromise} options={options}>
-    <Fade><Typography variant="h5" sx={{marginTop: '5%', marginLeft: '22.5%'}}>Checkout</Typography></Fade>
-
-    <Paper variant="outlined" sx={{marginTop: 2, width: '40%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '41%'}}>
-        <Fade><Typography variant="h5" sx={{textAlign: 'left'}}>Plus</Typography></Fade>
-        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginBottom: 1}}>Take your engagement to the next level!</Typography></Fade>
-        <PaymentElement/>
-        <Button variant="outlined" href="/twitter" sx={{height: 55, marginTop: 2}}><Typography color="inherit" variant="body2">Submit</Typography></Button>
-      </Paper>
-    </Elements>
   )
 }

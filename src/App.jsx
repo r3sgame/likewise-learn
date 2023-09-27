@@ -2,7 +2,7 @@ import { AddBoxTwoTone, AirplanemodeActiveTwoTone, ArticleTwoTone, DownloadForOf
 import { createTheme, Divider, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, ThemeProvider, Toolbar, Typography } from "@mui/material"
 import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import {Home, SideMenu, Twitter, Mastodon, Dashboard, Pricing, Checkout} from "./Pages";
+import {Home, SideMenu, Twitter, Mastodon, Dashboard, Pricing} from "./Pages";
 import { authentication } from "./firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 
@@ -71,7 +71,6 @@ function App() {
     <Route path="/mastodon" exact element={<React.Fragment><SideMenu/><Mastodon /></React.Fragment>} />
     <Route path="/dashboard" exact element={<React.Fragment><SideMenu/><Dashboard /></React.Fragment>} />
     <Route path="/upgrade" exact element={<React.Fragment><SideMenu/><Pricing /></React.Fragment>} />
-    <Route path="/checkout" exact element={<React.Fragment><SideMenu/><Checkout /></React.Fragment>} />
 </Routes>}
 
 {user == null &&<Routes>
