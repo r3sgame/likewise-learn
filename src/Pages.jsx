@@ -644,3 +644,58 @@ export function Pricing() {
     </React.Fragment>
   )
 }
+
+export function Checkout() {
+  console.log(authentication)
+  return(
+    <React.Fragment>
+    <Fade><Typography variant="h5" sx={{marginTop: '5%', marginLeft: '22.5%'}}>Upgrade</Typography></Fade>
+
+    <Paper variant="outlined" sx={{marginTop: 2, width: '40%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '41%'}}>
+        <Fade><Typography variant="h5" sx={{textAlign: 'left'}}>Plus</Typography></Fade>
+        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginBottom: 1}}>Take your engagement to the next level!</Typography></Fade>
+        <Divider/>
+        <List>
+    <ListItem>
+        <ListItemIcon><StarTwoTone/></ListItemIcon>
+        <ListItemText>Engagement prediction model</ListItemText>
+      </ListItem>
+      <ListItem>
+        <ListItemIcon><ThumbUpTwoTone/></ListItemIcon>
+        <ListItemText>Post refiner (200 uses)</ListItemText>
+      </ListItem>
+      <ListItem>
+        <ListItemIcon><AssessmentTwoTone/></ListItemIcon>
+        <ListItemText>Sentiment/Hate-speech detection</ListItemText>
+      </ListItem>
+      <ListItem>
+        <ListItemIcon><FastForwardTwoTone/></ListItemIcon>
+        <ListItemText>No ratelimits</ListItemText>
+      </ListItem>
+      <ListItem>
+        <ListItemIcon><LocalOfferTwoTone/></ListItemIcon>
+        <ListItemText>$7.00/month (7-day free trial)</ListItemText>
+      </ListItem>
+    </List>
+        <Divider/>
+        <Button variant="outlined" href="https://buy.stripe.com/4gw5mYauPeqBbDO3cd" sx={{height: 55, marginTop: 2}}><Typography color="inherit" variant="body2">Upgrade</Typography></Button>
+      </Paper>
+    
+      <Paper variant="outlined" sx={{marginTop: 2, width: '40%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '41%'}}>
+        <Fade><Typography variant="h5" sx={{textAlign: 'left'}}>Standard</Typography></Fade>
+        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginBottom: 1}}>Twitter/Mastodon engagement - for free.</Typography></Fade>
+        <Divider/>
+        <List>
+        <ListItem>
+        <ListItemIcon><StarTwoTone/></ListItemIcon>
+        <ListItemText>Engagement prediction model</ListItemText>
+      </ListItem>
+      <ListItem>
+        <ListItemIcon><LocalOfferTwoTone/></ListItemIcon>
+        <ListItemText>Free</ListItemText>
+      </ListItem>
+    </List>
+      </Paper>
+    </React.Fragment>
+  )
+}
