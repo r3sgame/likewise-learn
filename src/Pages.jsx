@@ -298,26 +298,12 @@ export function Twitter() {
 
         const sentimentResponse = await axios.post(
           "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment-latest",
-          {"inputs": text},
-          {
-            headers: {
-              'Authorization': `Bearer ${import.meta.env.VITE_HF_KEY}`,
-              'Content-Type': 'application/json',
-            },
-
-          }
+          {"inputs": text}
         );
 
         const hateResponse = await axios.post(
           "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-hate-latest",
-          {"inputs": text},
-          {
-            headers: {
-              'Authorization': `Bearer ${import.meta.env.VITE_HF_KEY}`,
-              'Content-Type': 'application/json',
-            },
-
-          }
+          {"inputs": text}
         );
 
         setSentiment(sentimentResponse.data);
@@ -607,7 +593,7 @@ export function Pricing() {
       </ListItem>
       <ListItem>
         <ListItemIcon><ThumbUpTwoTone/></ListItemIcon>
-        <ListItemText>Post refiner (200 uses)</ListItemText>
+        <ListItemText>Post refiner (200 uses per month)</ListItemText>
       </ListItem>
       <ListItem>
         <ListItemIcon><AssessmentTwoTone/></ListItemIcon>
@@ -648,21 +634,24 @@ export function Pricing() {
 export function Checkout() {
   const stripe = useStripe();
   const elements = useElements();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const subscribe = async (customerId, priceId) => {
+  const subscribe = async (email, paymentId) => {
     try {
-      const response = await axios.post('http://localhost:5000/create-subscription', {
-        customerId: customerId,
-        priceId: priceId,
+      const response = await axios.post('http://localhost:5000/create-test-customer-and-subscription', {
+        "email": email,
+        "paymentId": paymentId,
       });
   
       console.log(response.data);
     } catch (error) {
       console.error(`Error: ${error}`);
     }
+    setIsLoading(false)
   };
 
   const handleSubmit = async (event) => {
+    setIsLoading(true)
     event.preventDefault();
 
     const { error, paymentMethod } = await stripe.createPaymentMethod({
@@ -672,9 +661,7 @@ export function Checkout() {
 
 
     if (!error) {
-      //const customer = await stripe.createCustomer(paymentMethod.id);
-      //const subscription = await subscribe();
-      console.log(paymentMethod);
+      subscribe(authentication.currentUser.email, paymentMethod.id);
     }
   };
 
@@ -684,7 +671,11 @@ export function Checkout() {
 
     <Paper variant="outlined" sx={{marginTop: 2, width: '40%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '41%'}}>
         <CardElement options={{style: {base: {color: "#fff"}}}}/>
-        <Button variant="outlined" onClick={handleSubmit} disabled={!stripe}>Subscribe</Button>
+
+       {stripe && !isLoading && <Button sx={{marginTop: 1}} variant="outlined" onClick={handleSubmit}><Typography color="inherit" variant="body2">Subscribe</Typography></Button>}
+       {!stripe || isLoading && <Button sx={{marginTop: 1}} variant="outlined" onClick={handleSubmit} disabled><Typography color="inherit" variant="body2">Subscribe</Typography></Button>}
+       <br/>
+       {isLoading && <CircularProgress sx={{marginTop: 1}}/>}
       </Paper>
     </React.Fragment>
   )
