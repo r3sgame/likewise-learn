@@ -18,7 +18,7 @@ import { pipeline } from "@xenova/transformers";
 import GoogleIcon from '@mui/icons-material/Google';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
-import { authentication, provider } from "./firebase";
+import { authentication, paidUser, provider } from "./firebase";
 import { scrollToBottom } from "react-scroll/modules/mixins/animate-scroll";
 import openai, { OpenAI } from 'openai';
 import { CardElement, Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
@@ -281,8 +281,8 @@ export function Twitter() {
   async function Predict() {
     setLoadState(1);
    try{
-    /*let model = await tf.loadLayersModel('https://likewise-learn.web.app/models/v0.8js/model.json');
-      let extraction = await axios.post('https://r3sgame.duckdns.org', {
+    let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
+      let extraction = await axios.post('http://localhost:5000/vectorize', {
         "key": import.meta.env.VITE_EXTRACTOR_KEY,
         "text": text
       })
@@ -292,7 +292,7 @@ export function Twitter() {
       console.log(tensor)
       tensor = await tf.reshape(tf.cast(tensor, 'float32'), [1,770])
       const result = await model.predict(tensor).dataSync()
-      setLikes(result);*/
+      setLikes(result);
       
       
 
@@ -554,6 +554,8 @@ export function Mastodon() {
 
 export function Dashboard() {
   console.log(authentication)
+  console.log(paidUser)
+
   return(
     <React.Fragment>
     <Fade><Typography variant="h5" sx={{marginTop: '5%', marginLeft: '22.5%'}}>Dashboard</Typography></Fade>
@@ -570,7 +572,7 @@ export function Dashboard() {
         <Link href="https://r3sgame.github.io/likewise-learn-blog/2023/06/09/introduction/"><Typography variant="body2" color="inherit" sx={{textAlign: 'left', marginTop: 1}}>Welcome to the Likewise Learn Blog!</Typography></Link>
         <Divider sx={{marginTop: 2}}/>
         <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1}}>Account Settings:</Typography></Fade>
-        <Link href="https://billing.stripe.com/p/login/4gw29dcS3gh5fuwfYY"><Typography variant="body2" color="inherit" sx={{textAlign: 'left', marginTop: 1}}>Manage Payment Plan (For Premium Users)</Typography></Link>
+        {paidUser == 1 && <Link href="https://billing.stripe.com/p/login/4gw29dcS3gh5fuwfYY"><Typography variant="body2" color="inherit" sx={{textAlign: 'left', marginTop: 1}}>Manage Payment Plan</Typography></Link>}
       </Paper>
     </React.Fragment>
   )
