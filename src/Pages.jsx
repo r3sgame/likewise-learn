@@ -18,7 +18,7 @@ import { pipeline } from "@xenova/transformers";
 import GoogleIcon from '@mui/icons-material/Google';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
-import { authentication, paidUser, provider } from "./firebase";
+import { authentication, provider } from "./firebase";
 import { scrollToBottom } from "react-scroll/modules/mixins/animate-scroll";
 import openai, { OpenAI } from 'openai';
 import { CardElement, Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
@@ -57,7 +57,6 @@ export function SideMenu() {
   const navigate = useNavigate();
   const signout = async () => {
     await signOut(authentication)
-    console.log(authentication)
     navigate('/')
   }
   return(<Drawer variant="permanent" open PaperProps={{sx: {width: '25%'}}}>
@@ -553,8 +552,25 @@ export function Mastodon() {
 }
 
 export function Dashboard() {
-  console.log(authentication)
-  console.log(paidUser)
+  const [paidUser, setPaidUser] = useState(2);
+  
+  const checkPaidUser = async () => {
+    setPaidUser(2);
+    const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
+      "key": import.meta.env.VITE_EXTRACTOR_KEY,
+      "email": authentication.currentUser.email
+    })
+  
+    if(isPaidUser.data.result == "true") {
+      setPaidUser(1);
+    } else {
+      setPaidUser(0);
+    }
+  }
+
+  useEffect(() => {
+    checkPaidUser();
+  }, []);
 
   return(
     <React.Fragment>
@@ -579,7 +595,6 @@ export function Dashboard() {
 }
 
 export function Pricing() {
-  console.log(authentication)
   return(
     <React.Fragment>
     <Fade><Typography variant="h5" sx={{marginTop: '5%', marginLeft: '22.5%'}}>Upgrade</Typography></Fade>

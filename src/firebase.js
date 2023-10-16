@@ -20,24 +20,5 @@ const firebaseConfig = {
   const app = initializeApp(firebaseConfig);
   const authentication = getAuth();
   const provider = new GoogleAuthProvider();
-
-  const checkPaidUser = async () => {
-    isPaidUser = await axios.post('http://localhost:5000/get-customer', {
-      "key": import.meta.env.VITE_EXTRACTOR_KEY,
-      "email": authentication.currentUser.email
-    })
-    
-    console.log(isPaidUser)
-
-    if(isPaidUser == "true") {
-      console.log("True!!!!")
-      return true;
-    } else {
-      console.log("False!!!!")
-      return false;
-    }
-  }
-
-  const paidUser = checkPaidUser();
   
-  export {authentication , provider , paidUser};
+  export {authentication , provider};
