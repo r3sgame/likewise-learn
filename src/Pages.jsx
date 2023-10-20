@@ -18,39 +18,14 @@ import { pipeline } from "@xenova/transformers";
 import GoogleIcon from '@mui/icons-material/Google';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
-import { authentication, provider } from "./firebase";
+import { authentication, db, provider } from "./firebase";
 import { scrollToBottom } from "react-scroll/modules/mixins/animate-scroll";
 import openai, { OpenAI } from 'openai';
 import { CardElement, Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import { doc, setDoc } from "firebase/firestore";
 
 const stripePromise = loadStripe('pk_test_51NZxrZCKDHE02IcOq0XtXAYg0sAxuzXXpOwgyeMdI76Fvn6WnFxTQS7wDI8FQISddzOnzEtXTSIAljvXtSqH25tw00lST8aNAo');
-
-function KeepAPIsActive() {
-  const sentiment = axios.post(
-    "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment-latest",
-    {"inputs": "Hi"},
-    {
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_HF_KEY}`,
-        'Content-Type': 'application/json',
-      },
-
-    }
-  );
-
-  const hate = axios.post(
-    "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-hate-latest",
-    {"inputs": "Hi"},
-    {
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_HF_KEY}`,
-        'Content-Type': 'application/json',
-      },
-
-    }
-  );
-}
 
 export function SideMenu() {
 
@@ -262,20 +237,30 @@ export function Twitter() {
   const [sentiment, setSentiment] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
   const [hate, setHate] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
 
+  const [paidUser, setPaidUser] = useState(2);
+  
+  const checkPaidUser = async () => {
+    setPaidUser(2);
+    const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
+      "key": import.meta.env.VITE_EXTRACTOR_KEY,
+      "email": authentication.currentUser.email
+    })
+  
+    if(isPaidUser.data.result == "true") {
+      setPaidUser(1);
+    } else {
+      setPaidUser(0);
+    }
+  }
+
+  useEffect(() => {
+    checkPaidUser();
+  }, []);
+
   const openai = new OpenAI({
     apiKey: import.meta.env.VITE_OPENAI_KEY,
     dangerouslyAllowBrowser: true
   });
-
-  useEffect(() => {
-    KeepAPIsActive();
-    const intervalId = setInterval(() => {
-      KeepAPIsActive();
-    }, 60000); // Interval in milliseconds (e.g., 1000ms = 1 second)
-
-    // Clean up the interval when the component unmounts
-    return () => clearInterval(intervalId);
-  }, []);
 
   async function Predict() {
     setLoadState(1);
@@ -294,20 +279,17 @@ export function Twitter() {
       setLikes(result);
       
       
-
-        const sentimentResponse = await axios.post(
-          "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment-latest",
-          {"inputs": text}
+      if(paidUser == 1){
+        const advancedResponse = await axios.post(
+          "http://localhost:5000/advanced",
+          {"key": import.meta.env.VITE_EXTRACTOR_KEY, "text": text}
         );
 
-        const hateResponse = await axios.post(
-          "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-hate-latest",
-          {"inputs": text}
-        );
+        setSentiment(advancedResponse.data.sentiment);
+        setHate(advancedResponse.data.hate)
+      }
 
-        setSentiment(sentimentResponse.data);
-        setHate(hateResponse.data)
-        setLoadState(2);
+      setLoadState(2);
 
         scroller.scrollTo('firstResult', {
         duration: 100,
@@ -384,9 +366,12 @@ export function Twitter() {
         <TextField InputProps={{
           inputComponent: NumberFormatBase,
         }} onChange={(e) => setMediaCount(e.target.value)} sx={{marginTop: 2.5, marginLeft: 2}} id="followers" label="Media Count" variant="outlined" />
-      {text != "" && followers != "" && <Button onClick={Predict} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test Tweet</Typography></Button>}
-      {(text == "" || followers == "") && <Button disabled variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test Tweet</Typography></Button>}
+      {text != "" && followers != "" && media != "" && <Button onClick={Predict} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
+      {(text == "" || followers == "" || media == "") && <Button disabled variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
 
+      {paidUser == 1 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
+          {paidUser == 0 && <Button href="/upgrade" variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
+          {paidUser == 2 && <Button disabled onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
       </Box>
       </Fade>
     
@@ -411,11 +396,16 @@ export function Twitter() {
           <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>This value is the engagement rate, a ratio of likes/retweets/replies to impressions. It is predicted from week-old engagement rates of tweets with similar key words and follower/media counts.</Typography></Fade>
           <Divider sx={{marginTop: 1}}/>
           <Fade><Typography variant="h5" sx={{marginTop: 1, textAlign: 'left'}}>Advanced Metrics</Typography></Fade>
-          <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Sentiment: {sentiment[0][0].label} ({(sentiment[0][0].score * 100).toFixed(2)}% Confidence)</Typography></Fade>
+          {paidUser == 1 && <React.Fragment><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Sentiment: {sentiment[0][0].label} ({(sentiment[0][0].score * 100).toFixed(2)}% Confidence)</Typography></Fade>
           <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Hate Speech: {hate[0][0].label} ({(hate[0][0].score * 100).toFixed(2)}% Confidence)</Typography></Fade>
-          <Fade><Typography variant="body2" color="text.secondary" sx={{marginTop: 1, textAlign: 'left'}}>To succeed in the algorithm and attract users, your tweets should be nonviolent and factual.</Typography></Fade>
+          <Fade><Typography variant="body2" color="text.secondary" sx={{marginTop: 1, textAlign: 'left'}}>To succeed in the algorithm and attract users, your tweets should be nonviolent and factual.</Typography></Fade></React.Fragment>}
+          
+          {paidUser == 0 && <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Upgrade your account to access advanced metrics.</Typography></Fade>}
+          
           <Divider sx={{marginTop: 1}}/>
-          <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>
+          {paidUser == 1 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
+          {paidUser == 0 && <Button href="/upgrade" variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
+          {paidUser == 2 && <Button disabled onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
         </Paper>}
         </Element>
 
@@ -655,6 +645,11 @@ export function Checkout() {
 
   const subscribe = async (email, paymentId) => {
     try {
+      await setDoc(doc(db, "subscriptions", authentication.currentUser.email), {
+        email: authentication.currentUser.email,
+        uses: 200,
+      });
+
       const response = await axios.post('http://localhost:5000/create-test-customer-and-subscription', {
         "email": email,
         "paymentId": paymentId,

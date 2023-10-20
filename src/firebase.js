@@ -3,6 +3,7 @@
 import axios from "axios";
 import { initializeApp } from "firebase/app";
 import { GoogleAuthProvider, getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore"
 
 // See: https://firebase.google.com/docs/web/learn-more#config-object
 const firebaseConfig = {
@@ -20,5 +21,6 @@ const firebaseConfig = {
   const app = initializeApp(firebaseConfig);
   const authentication = getAuth();
   const provider = new GoogleAuthProvider();
+  const db = getFirestore(app)
   
-  export {authentication , provider};
+  export {authentication , provider, db};
