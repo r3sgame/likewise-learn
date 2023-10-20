@@ -366,12 +366,12 @@ export function Twitter() {
         <TextField InputProps={{
           inputComponent: NumberFormatBase,
         }} onChange={(e) => setMediaCount(e.target.value)} sx={{marginTop: 2.5, marginLeft: 2}} id="followers" label="Media Count" variant="outlined" />
-      {text != "" && followers != "" && media != "" && <Button onClick={Predict} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
-      {(text == "" || followers == "" || media == "") && <Button disabled variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
+      {text != "" && followers != "" && mediaCount != "" && <Button onClick={Predict} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
+      {(text == "" || followers == "" || mediaCount == "") && <Button disabled variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
 
-      {paidUser == 1 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
-          {paidUser == 0 && <Button href="/upgrade" variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
-          {paidUser == 2 && <Button disabled onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
+      {paidUser == 1 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
+          {paidUser == 0 && <Button href="/upgrade" variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
+          {paidUser == 2 && <Button disabled onClick={RefineTweet} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
       </Box>
       </Fade>
     
@@ -400,7 +400,8 @@ export function Twitter() {
           <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Hate Speech: {hate[0][0].label} ({(hate[0][0].score * 100).toFixed(2)}% Confidence)</Typography></Fade>
           <Fade><Typography variant="body2" color="text.secondary" sx={{marginTop: 1, textAlign: 'left'}}>To succeed in the algorithm and attract users, your tweets should be nonviolent and factual.</Typography></Fade></React.Fragment>}
           
-          {paidUser == 0 && <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Upgrade your account to access advanced metrics.</Typography></Fade>}
+          {paidUser == 0 && <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}><Link href="/upgrade">Upgrade your account</Link> to access advanced metrics.</Typography></Fade>}
+          {paidUser == 2 && <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>It seems there was an error with processing your account's status. Consider reloading and trying again?</Typography></Fade>}
           
           <Divider sx={{marginTop: 1}}/>
           {paidUser == 1 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
