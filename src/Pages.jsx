@@ -396,8 +396,8 @@ export function Twitter() {
           <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>This value is the engagement rate, a ratio of likes/retweets/replies to impressions. It is predicted from week-old engagement rates of tweets with similar key words and follower/media counts.</Typography></Fade>
           <Divider sx={{marginTop: 1}}/>
           <Fade><Typography variant="h5" sx={{marginTop: 1, textAlign: 'left'}}>Advanced Metrics</Typography></Fade>
-          {paidUser == 1 && <React.Fragment><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Sentiment: {sentiment[0][0].label} ({(sentiment[0][0].score * 100).toFixed(2)}% Confidence)</Typography></Fade>
-          <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Hate Speech: {hate[0][0].label} ({(hate[0][0].score * 100).toFixed(2)}% Confidence)</Typography></Fade>
+          {paidUser == 1 && <React.Fragment><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Sentiment: {sentiment.label} ({(sentiment.score * 100).toFixed(2)}% Confidence)</Typography></Fade>
+          <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Hate Speech: {hate.label} ({(hate.score * 100).toFixed(2)}% Confidence)</Typography></Fade>
           <Fade><Typography variant="body2" color="text.secondary" sx={{marginTop: 1, textAlign: 'left'}}>To succeed in the algorithm and attract users, your tweets should be nonviolent and factual.</Typography></Fade></React.Fragment>}
           
           {paidUser == 0 && <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}><Link href="/upgrade">Upgrade your account</Link> to access advanced metrics.</Typography></Fade>}
@@ -578,8 +578,10 @@ export function Dashboard() {
         <Link href="https://r3sgame.github.io/likewise-learn-blog/2023/06/15/engagementrate/"><Typography variant="body2" color="inherit" sx={{textAlign: 'left', marginTop: 1}}>Engagment Rate - The Number 1 Social Media Metric</Typography></Link>
         <Link href="https://r3sgame.github.io/likewise-learn-blog/2023/06/09/introduction/"><Typography variant="body2" color="inherit" sx={{textAlign: 'left', marginTop: 1}}>Welcome to the Likewise Learn Blog!</Typography></Link>
         <Divider sx={{marginTop: 2}}/>
-        <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1}}>Account Settings:</Typography></Fade>
-        {paidUser == 1 && <Link href="https://billing.stripe.com/p/login/4gw29dcS3gh5fuwfYY"><Typography variant="body2" color="inherit" sx={{textAlign: 'left', marginTop: 1}}>Manage Payment Plan</Typography></Link>}
+        <Fade><Typography variant="h5" sx={{textAlign: 'left', marginTop: 2}}>Account Settings</Typography></Fade>
+        {paidUser == 1 && <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 1}}>Premium Plan: <Link href="https://billing.stripe.com/p/login/test_cN2dTvbEl6L7e1q9AA">Manage/Cancel Payment Plan</Link></Typography>}
+        {paidUser == 0 && <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 1}}>Free plan: <Link href="/upgrade">Upgrade Account</Link></Typography>}
+        {paidUser == 2 && <CircularProgress sx={{marginTop: 1}}/>}
       </Paper>
     </React.Fragment>
   )
@@ -591,7 +593,7 @@ export function Pricing() {
     <Fade><Typography variant="h5" sx={{marginTop: '5%', marginLeft: '22.5%'}}>Upgrade</Typography></Fade>
 
     <Paper variant="outlined" sx={{marginTop: 2, width: '40%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '41%'}}>
-        <Fade><Typography variant="h5" sx={{textAlign: 'left'}}>Plus</Typography></Fade>
+        <Fade><Typography variant="h5" sx={{textAlign: 'left'}}>Premium</Typography></Fade>
         <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginBottom: 1}}>Take your engagement to the next level!</Typography></Fade>
         <Divider/>
         <List>
