@@ -64,16 +64,47 @@ function App() {
 
   const [user, loading, error] = useAuthState(authentication);
 
+  const [paidUser, setPaidUser] = useState(2);
+  
+  const checkPaidUser = async () => {
+    setPaidUser(2);
+    if (user == null) {
+      setPaidUser(0);
+    } else {
+    const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
+      "key": import.meta.env.VITE_EXTRACTOR_KEY,
+      "email": authentication.currentUser.email
+    })
+  
+    if(isPaidUser.data.result == "true") {
+      setPaidUser(1);
+    } else {
+      setPaidUser(0);
+    }
+  }
+  }
+
+  useEffect(() => {
+    checkPaidUser();
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
     <BrowserRouter>
-    {user != null &&<Routes>
+    {user != null && paidUser == 0 && <Routes>
     <Route path="/" exact element={<React.Fragment><Home/></React.Fragment>} />
     <Route path="/twitter" exact element={<React.Fragment><SideMenu/><Twitter /></React.Fragment>} />
     <Route path="/mastodon" exact element={<React.Fragment><SideMenu/><Mastodon /></React.Fragment>} />
     <Route path="/dashboard" exact element={<React.Fragment><SideMenu/><Dashboard /></React.Fragment>} />
     <Route path="/upgrade" exact element={<React.Fragment><SideMenu/><Pricing /></React.Fragment>} />
     <Route path="/checkout" exact element={<Elements stripe={stripePromise}><SideMenu/><Checkout /></Elements>} />
+</Routes>}
+
+{user != null && paidUser != 0 && <Routes>
+    <Route path="/" exact element={<React.Fragment><Home/></React.Fragment>} />
+    <Route path="/twitter" exact element={<React.Fragment><SideMenu/><Twitter /></React.Fragment>} />
+    <Route path="/mastodon" exact element={<React.Fragment><SideMenu/><Mastodon /></React.Fragment>} />
+    <Route path="/dashboard" exact element={<React.Fragment><SideMenu/><Dashboard /></React.Fragment>} />
 </Routes>}
 
 {user == null &&<Routes>

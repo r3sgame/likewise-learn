@@ -34,6 +34,27 @@ export function SideMenu() {
     await signOut(authentication)
     navigate('/')
   }
+
+  const [paidUser, setPaidUser] = useState(2);
+  
+  const checkPaidUser = async () => {
+    setPaidUser(2);
+    const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
+      "key": import.meta.env.VITE_EXTRACTOR_KEY,
+      "email": authentication.currentUser.email
+    })
+  
+    if(isPaidUser.data.result == "true") {
+      setPaidUser(1);
+    } else {
+      setPaidUser(0);
+    }
+  }
+
+  useEffect(() => {
+    checkPaidUser();
+  }, []);
+
   return(<Drawer variant="permanent" open PaperProps={{sx: {width: '25%'}}}>
         <Toolbar />
       <Divider />
@@ -75,14 +96,14 @@ export function SideMenu() {
           </ListItem>
       </List>
       <Divider />
-      <ListItem key='Upgrade' disablePadding>
+      {paidUser == 0 && <ListItem key='Upgrade' disablePadding>
             <ListItemButton sx={{color: '#ff5400'}} href="/upgrade">
               <ListItemIcon>
                 <ArrowCircleUpTwoTone />
               </ListItemIcon>
               <ListItemText variant='p' primary='Upgrade' />
             </ListItemButton>
-          </ListItem>
+          </ListItem>}
       <ListItem key='Sign Out' disablePadding>
             <ListItemButton onClick={signout}>
               <ListItemIcon>
@@ -238,16 +259,31 @@ export function Twitter() {
   const [hate, setHate] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
 
   const [paidUser, setPaidUser] = useState(2);
+  const [uses, setUses] = useState(200);
+
+  const myCollection = collection(firestore, "subscriptions");
+  const q = query(myCollection, where("email", "==", authentication.currentUser.email));
   
   const checkPaidUser = async () => {
     setPaidUser(2);
+
     const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
   
     if(isPaidUser.data.result == "true") {
+
+
+    const querySnapshot = await getDocs(q);
+
+    try {
+      setUses(querySnapshot.docs[0].data().uses);
       setPaidUser(1);
+    } catch (e) {
+      console.error("Error getting document: ", e);
+    }
+
     } else {
       setPaidUser(0);
     }
@@ -314,6 +350,8 @@ export function Twitter() {
       smooth: true,
       offset: 50, // Scrolls to element + 50 pixels down the page
     })
+
+    try {
     message = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
@@ -344,9 +382,16 @@ export function Twitter() {
 
       iterations.push({index: iterations.length, text: message, engagement: 0.02});
       setRefinedText(iterations);
-      console.log(iterations)
   }
-      console.log(refinedText)
+
+  setUses(1-uses)
+  await setDoc(doc(db, "subscriptions", authentication.currentUser.email), {
+    email: authentication.currentUser.email,
+    uses: uses,
+  });
+} catch (err) {
+  console.log(err);
+  }
 
       setLoadState(4)
   }
@@ -369,9 +414,9 @@ export function Twitter() {
       {text != "" && followers != "" && mediaCount != "" && <Button onClick={Predict} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
       {(text == "" || followers == "" || mediaCount == "") && <Button disabled variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
 
-      {paidUser == 1 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
-          {paidUser == 0 && <Button href="/upgrade" variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
-          {paidUser == 2 && <Button disabled onClick={RefineTweet} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
+      {paidUser == 1 && uses > 0 && loadState != 3 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
+      {paidUser == 0 && <Button href="/upgrade" variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
+      {paidUser == 2 || uses == 0 || loadState == 3 && <Button disabled variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
       </Box>
       </Fade>
     
@@ -404,14 +449,15 @@ export function Twitter() {
           {paidUser == 2 && <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>It seems there was an error with processing your account's status. Consider reloading and trying again?</Typography></Fade>}
           
           <Divider sx={{marginTop: 1}}/>
-          {paidUser == 1 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
+          {paidUser == 1 && uses > 0 && loadState != 3 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
           {paidUser == 0 && <Button href="/upgrade" variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
-          {paidUser == 2 && <Button disabled onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
+          {paidUser == 2 || uses == 0 || loadState == 3 && <Button disabled variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
         </Paper>}
         </Element>
 
         <Element name="secondResult">
           {loadState > 2 && <React.Fragment><Paper variant="outlined" sx={{marginTop: 3, width: '30%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '46.5%'}}>
+          <Typography variant="body2" color="text.secondary" sx={{marginTop: 1}}>{uses} uses left {uses == 0 && " - will replenish by the start of next month"}</Typography>
           {refinedText.map(message => (<><Divider/><Fade><Typography variant="h5" sx={{marginTop: 1, textAlign: 'left'}}>Iteration {message.index}</Typography></Fade><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1, marginBottom: 1}}>{message.text}</Typography></Fade></>))}
           {loadState == 3 && <React.Fragment><CircularProgress/><Typography variant="body2" color="text.secondary" sx={{marginTop: 1}}>Generating... Please Wait...</Typography></React.Fragment>}
 
@@ -646,6 +692,8 @@ export function Checkout() {
   const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
 
+  const navigate = useNavigate();
+
   const subscribe = async (email, paymentId) => {
     try {
       await setDoc(doc(db, "subscriptions", authentication.currentUser.email), {
@@ -663,6 +711,7 @@ export function Checkout() {
       console.error(`Error: ${error}`);
     }
     setIsLoading(false)
+    navigate("/dashboard")
   };
 
   const handleSubmit = async (event) => {
@@ -691,6 +740,7 @@ export function Checkout() {
        {!stripe || isLoading && <Button sx={{marginTop: 1}} variant="outlined" onClick={handleSubmit} disabled><Typography color="inherit" variant="body2">Subscribe</Typography></Button>}
        <br/>
        {isLoading && <CircularProgress sx={{marginTop: 1}}/>}
+       <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 1}}>Upon successful registration, you will be redirected to the dashboard. You can then enjoy premium features! Billing is $6.99/month, with a 7-day free trial. You can cancel at any time through the dashboard. If you are reactivating your subscription, your billing will pick up from where it left off.</Typography>
       </Paper>
     </React.Fragment>
   )
