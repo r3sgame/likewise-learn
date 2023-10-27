@@ -9,7 +9,7 @@ import { Fade, Zoom } from "react-reveal";
 import { isMobile } from "react-device-detect";
 import { validate } from "email-validator";
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set } from "firebase/database";
+import { getDatabase, query, ref, set } from "firebase/database";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { AccountCircleTwoTone, AddBoxTwoTone, ArrowCircleUpTwoTone, AssessmentTwoTone, DisabledByDefaultTwoTone, DownloadForOfflineTwoTone, ErrorTwoTone, FastForwardTwoTone, HomeTwoTone, InfoTwoTone, LinkedCameraOutlined, LocalOfferTwoTone, StarTwoTone, ThumbUpTwoTone } from "@mui/icons-material";
 import { Element, scroller } from "react-scroll";
@@ -23,7 +23,7 @@ import { scrollToBottom } from "react-scroll/modules/mixins/animate-scroll";
 import openai, { OpenAI } from 'openai';
 import { CardElement, Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { doc, setDoc } from "firebase/firestore";
+import { collection, doc, getDocs, getFirestore, setDoc, where } from "firebase/firestore";
 
 const stripePromise = loadStripe('pk_test_51NZxrZCKDHE02IcOq0XtXAYg0sAxuzXXpOwgyeMdI76Fvn6WnFxTQS7wDI8FQISddzOnzEtXTSIAljvXtSqH25tw00lST8aNAo');
 
@@ -261,7 +261,7 @@ export function Twitter() {
   const [paidUser, setPaidUser] = useState(2);
   const [uses, setUses] = useState(200);
 
-  const myCollection = collection(firestore, "subscriptions");
+  const myCollection = collection(db, "subscriptions");
   const q = query(myCollection, where("email", "==", authentication.currentUser.email));
   
   const checkPaidUser = async () => {
@@ -363,8 +363,19 @@ export function Twitter() {
     console.log(message)
     message = await message.choices[0].message.content
 
+    let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
 
-    await iterations.push({index: 0, text: message, engagement: 0.02});
+    let extraction = await axios.post('http://localhost:5000/vectorize', {
+      "key": import.meta.env.VITE_EXTRACTOR_KEY,
+      "text": message
+    })
+
+    let tensor = await preprocessArray(extraction.data.data)
+    tensor.push(parseFloat(followers), parseFloat(mediaCount))
+    tensor = await tf.reshape(tf.cast(tensor, 'float32'), [1,770])
+    let result = await model.predict(tensor).dataSync()
+
+    await iterations.push({index: 0, text: message, engagement: result});
     setRefinedText(iterations)
     console.log(iterations)
 
@@ -380,15 +391,26 @@ export function Twitter() {
 
       message = message.choices[0].message.content
 
-      iterations.push({index: iterations.length, text: message, engagement: 0.02});
+      let extraction = await axios.post('http://localhost:5000/vectorize', {
+      "key": import.meta.env.VITE_EXTRACTOR_KEY,
+      "text": message
+    })
+
+    tensor = await preprocessArray(extraction.data.data)
+    tensor.push(parseFloat(followers), parseFloat(mediaCount))
+    tensor = await tf.reshape(tf.cast(tensor, 'float32'), [1,770])
+    result = await model.predict(tensor).dataSync()
+
+      iterations.push({index: iterations.length, text: message, engagement: result});
       setRefinedText(iterations);
   }
-
-  setUses(1-uses)
   await setDoc(doc(db, "subscriptions", authentication.currentUser.email), {
     email: authentication.currentUser.email,
-    uses: uses,
+    uses: uses - 1,
   });
+
+  await setUses(uses - 1)
+  
 } catch (err) {
   console.log(err);
   }
@@ -413,10 +435,6 @@ export function Twitter() {
         }} onChange={(e) => setMediaCount(e.target.value)} sx={{marginTop: 2.5, marginLeft: 2}} id="followers" label="Media Count" variant="outlined" />
       {text != "" && followers != "" && mediaCount != "" && <Button onClick={Predict} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
       {(text == "" || followers == "" || mediaCount == "") && <Button disabled variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
-
-      {paidUser == 1 && uses > 0 && loadState != 3 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
-      {paidUser == 0 && <Button href="/upgrade" variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
-      {paidUser == 2 || uses == 0 || loadState == 3 && <Button disabled variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Refine</Typography></Button>}
       </Box>
       </Fade>
     
@@ -457,8 +475,8 @@ export function Twitter() {
 
         <Element name="secondResult">
           {loadState > 2 && <React.Fragment><Paper variant="outlined" sx={{marginTop: 3, width: '30%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '46.5%'}}>
-          <Typography variant="body2" color="text.secondary" sx={{marginTop: 1}}>{uses} uses left {uses == 0 && " - will replenish by the start of next month"}</Typography>
-          {refinedText.map(message => (<><Divider/><Fade><Typography variant="h5" sx={{marginTop: 1, textAlign: 'left'}}>Iteration {message.index}</Typography></Fade><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1, marginBottom: 1}}>{message.text}</Typography></Fade></>))}
+          <Typography variant="body2" color="text.secondary" sx={{marginTop: 1, marginBottom: 2}}>{uses} uses left this month {uses == 0 && " - will replenish by the start of next month"}</Typography>
+          {refinedText.map(message => (<><Divider/><Fade><Typography variant="h5" sx={{marginTop: 1, textAlign: 'left'}}>Iteration {message.index}</Typography></Fade><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1, marginBottom: 1}}>{message.text}</Typography></Fade><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1, marginBottom: 1}}>Engagement Rate: {(message.engagement*100).toFixed(2)}%</Typography></Fade></>))}
           {loadState == 3 && <React.Fragment><CircularProgress/><Typography variant="body2" color="text.secondary" sx={{marginTop: 1}}>Generating... Please Wait...</Typography></React.Fragment>}
 
           </Paper>
