@@ -263,6 +263,8 @@ export function Twitter() {
 
   const myCollection = collection(db, "subscriptions");
   const q = query(myCollection, where("email", "==", authentication.currentUser.email));
+
+  const currentDate = new Date();
   
   const checkPaidUser = async () => {
     setPaidUser(2);
@@ -278,7 +280,17 @@ export function Twitter() {
     const querySnapshot = await getDocs(q);
 
     try {
-      setUses(querySnapshot.docs[0].data().uses);
+      console.log(querySnapshot.docs[0].data().month, currentDate.getMonth())
+      if(querySnapshot.docs[0].data().month == currentDate.getMonth()) {
+        setUses(querySnapshot.docs[0].data().uses);
+      } else {
+        setUses(200)
+        await setDoc(doc(db, "subscriptions", authentication.currentUser.email), {
+        email: authentication.currentUser.email,
+        uses: 200,
+        month: currentDate.getMonth()
+      });
+      }
       setPaidUser(1);
     } catch (e) {
       console.error("Error getting document: ", e);
@@ -710,6 +722,8 @@ export function Checkout() {
   const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
 
+  const currentDate = new Date();
+
   const navigate = useNavigate();
 
   const subscribe = async (email, paymentId) => {
@@ -717,6 +731,7 @@ export function Checkout() {
       await setDoc(doc(db, "subscriptions", authentication.currentUser.email), {
         email: authentication.currentUser.email,
         uses: 200,
+        month: currentDate.getMonth()
       });
 
       const response = await axios.post('http://localhost:5000/create-test-customer-and-subscription', {
@@ -755,7 +770,7 @@ export function Checkout() {
         <CardElement options={{style: {base: {color: "#fff"}}}}/>
 
        {stripe && !isLoading && <Button sx={{marginTop: 1}} variant="outlined" onClick={handleSubmit}><Typography color="inherit" variant="body2">Subscribe</Typography></Button>}
-       {!stripe || isLoading && <Button sx={{marginTop: 1}} variant="outlined" onClick={handleSubmit} disabled><Typography color="inherit" variant="body2">Subscribe</Typography></Button>}
+       {!stripe || isLoading && <Button sx={{marginTop: 1}} variant="outlined" disabled><Typography color="inherit" variant="body2">Subscribe</Typography></Button>}
        <br/>
        {isLoading && <CircularProgress sx={{marginTop: 1}}/>}
        <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 1}}>Upon successful registration, you will be redirected to the dashboard. You can then enjoy premium features! Billing is $6.99/month, with a 7-day free trial. You can cancel at any time through the dashboard. If you are reactivating your subscription, your billing will pick up from where it left off.</Typography>
