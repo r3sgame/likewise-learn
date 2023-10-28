@@ -494,12 +494,55 @@ export function Mastodon() {
   const [text, setText] = useState("");
   const [followers, setFollowers] = useState("");
   const [mediaCount, setMediaCount] = useState("");
-  const [refinedText, setRefinedText] = useState("");
-    async function Predict() {
+  const [refinedText, setRefinedText] = useState([]);
+  const [sentiment, setSentiment] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
+  const [hate, setHate] = useState([[{"label": "ERROR", "score": "ERROR"}]]);
+
+  const [paidUser, setPaidUser] = useState(2);
+  const [uses, setUses] = useState(200);
+
+  const myCollection = collection(db, "subscriptions");
+  const q = query(myCollection, where("email", "==", authentication.currentUser.email));
+  
+  const checkPaidUser = async () => {
+    setPaidUser(2);
+
+    const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
+      "key": import.meta.env.VITE_EXTRACTOR_KEY,
+      "email": authentication.currentUser.email
+    })
+  
+    if(isPaidUser.data.result == "true") {
+
+
+    const querySnapshot = await getDocs(q);
+
+    try {
+      setUses(querySnapshot.docs[0].data().uses);
+      setPaidUser(1);
+    } catch (e) {
+      console.error("Error getting document: ", e);
+    }
+
+    } else {
+      setPaidUser(0);
+    }
+  }
+
+  useEffect(() => {
+    checkPaidUser();
+  }, []);
+
+  const openai = new OpenAI({
+    apiKey: import.meta.env.VITE_OPENAI_KEY,
+    dangerouslyAllowBrowser: true
+  });
+
+  async function Predict() {
     setLoadState(1);
    try{
-    let model = await tf.loadLayersModel('https://likewise-learn.web.app/models/v0.8js/model.json');
-      let extraction = await axios.post('https://r3sgame.duckdns.org', {
+    let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
+      let extraction = await axios.post('http://localhost:5000/vectorize', {
         "key": import.meta.env.VITE_EXTRACTOR_KEY,
         "text": text
       })
@@ -510,22 +553,36 @@ export function Mastodon() {
       tensor = await tf.reshape(tf.cast(tensor, 'float32'), [1,770])
       const result = await model.predict(tensor).dataSync()
       setLikes(result);
-      console.log(likes)
-      scroller.scrollTo('firstResult', {
+      
+      
+      if(paidUser == 1){
+        const advancedResponse = await axios.post(
+          "http://localhost:5000/advanced",
+          {"key": import.meta.env.VITE_EXTRACTOR_KEY, "text": text}
+        );
+
+        setSentiment(advancedResponse.data.sentiment);
+        setHate(advancedResponse.data.hate)
+      }
+
+      setLoadState(2);
+
+        scroller.scrollTo('firstResult', {
         duration: 100,
         delay: 100,
         smooth: true,
         offset: 50, // Scrolls to element + 50 pixels down the page
       })
-      setLoadState(2);
    }
      catch (err) {
       console.log(err);
       }
     }
 
-  function RefineTweet() {
+  async function RefineTweet() {
     setLoadState(3);
+    let message;
+    let iterations = [];
 
     scroller.scrollTo('secondResult', {
       duration: 100,
@@ -534,18 +591,71 @@ export function Mastodon() {
       offset: 50, // Scrolls to element + 50 pixels down the page
     })
 
-    axios.post('https://r3sgame.duckdns.org', {
-      "key": import.meta.env.VITE_LLM_KEY,
-      "text": text
+    try {
+    message = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+            {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
+            {"role": "user", "content": `Refine the tweet below to be more engaging. Its original engagement rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 280 characters AT MOST: \n \n ${text}`},
+        ],
+        temperature: 0.7
     })
-    .then(function (response) {
-      setRefinedText(response.data.Tweet)
-      console.log(refinedText)
+    console.log(message)
+    message = await message.choices[0].message.content
+
+    let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
+
+    let extraction = await axios.post('http://localhost:5000/vectorize', {
+      "key": import.meta.env.VITE_EXTRACTOR_KEY,
+      "text": message
+    })
+
+    let tensor = await preprocessArray(extraction.data.data)
+    tensor.push(parseFloat(followers), parseFloat(mediaCount))
+    tensor = await tf.reshape(tf.cast(tensor, 'float32'), [1,770])
+    let result = await model.predict(tensor).dataSync()
+
+    await iterations.push({index: 0, text: message, engagement: result});
+    setRefinedText(iterations)
+    console.log(iterations)
+
+    for (let i = 1; i <= 2; i++) {
+      message = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+              {"role": "system", "content": "You are Likewise Learn, an AI that refines tweets to be more engaging."},
+              {"role": "user", "content": `Refine the tweet below to be more engaging. Its original engagement rate was ${(likes*100).toFixed(2)}%. ONLY return the refined tweet, and keep the original goal, writing style, hashtags, and links. You can only have 500 characters AT MOST: \n \n ${message}`},
+          ],
+          temperature: 0.7
+      })
+
+      message = message.choices[0].message.content
+
+      let extraction = await axios.post('http://localhost:5000/vectorize', {
+      "key": import.meta.env.VITE_EXTRACTOR_KEY,
+      "text": message
+    })
+
+    tensor = await preprocessArray(extraction.data.data)
+    tensor.push(parseFloat(followers), parseFloat(mediaCount))
+    tensor = await tf.reshape(tf.cast(tensor, 'float32'), [1,770])
+    result = await model.predict(tensor).dataSync()
+
+      iterations.push({index: iterations.length, text: message, engagement: result});
+      setRefinedText(iterations);
+  }
+  await setDoc(doc(db, "subscriptions", authentication.currentUser.email), {
+    email: authentication.currentUser.email,
+    uses: uses - 1,
+  });
+
+  await setUses(uses - 1)
+  
+} catch (err) {
+  console.log(err);
+  }
+
       setLoadState(4)
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
   }
 
   return (
@@ -555,7 +665,7 @@ export function Mastodon() {
       <Box sx={{marginLeft: '25%'}}>
         <TextareaAutosize onChange={(e) => {setCount(e.target.value.trim().length) ; setText(e.target.value.trim())}} sx={{ width: '30%', flexDirection: 'row', overflow: 'auto'}} placeholder="What's going on? Keep it at 500 characters!" maxLength={500} minRows={7}></TextareaAutosize>
         <br/>
-        {count !== 0 && <CircularProgress sx={{marginTop: 3, marginRight: 2}} variant="determinate" value={(count/500)*100} />}
+        {count !== 0 && <CircularProgress sx={{marginTop: 3, marginRight: 2}} variant="determinate" value={(count/280)*100} />}
         {count == 0 && <CircularProgress color="secondary" sx={{marginTop: 3, marginRight: 2}} variant="determinate" value={100} />}
         <TextField InputProps={{
           inputComponent: NumberFormatBase,
@@ -563,9 +673,8 @@ export function Mastodon() {
         <TextField InputProps={{
           inputComponent: NumberFormatBase,
         }} onChange={(e) => setMediaCount(e.target.value)} sx={{marginTop: 2.5, marginLeft: 2}} id="followers" label="Media Count" variant="outlined" />
-      {text != "" && followers != "" && mediaCount != "" && <Button onClick={Predict} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test Toot</Typography></Button>}
-      {(text == "" || followers == "" || mediaCount == "") && <Button disabled variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test Toot</Typography></Button>}
-
+      {text != "" && followers != "" && mediaCount != "" && <Button onClick={Predict} variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
+      {(text == "" || followers == "" || mediaCount == "") && <Button disabled variant="outlined" sx={{height: 55, marginBottom: 3, marginLeft: 2}}><Typography variant="body1">Test</Typography></Button>}
       </Box>
       </Fade>
     
@@ -587,18 +696,29 @@ export function Mastodon() {
 
           <Divider sx={{marginTop: 1}}/>
           <Typography variant="h5" sx={{marginTop: 1, textAlign: 'left'}}>{(likes*100).toFixed(2)}%</Typography>
-          <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>This value is the engagement rate, a ratio of favorites/boosts/replies to impressions. It is predicted from week-old engagement rates of toots with similar key words and follower/media counts.</Typography></Fade>
-
+          <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>This value is the engagement rate, a ratio of likes/boosts/replies to impressions. It is predicted from week-old engagement rates of toots with similar key words and follower/media counts.</Typography></Fade>
           <Divider sx={{marginTop: 1}}/>
-          <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>
+          <Fade><Typography variant="h5" sx={{marginTop: 1, textAlign: 'left'}}>Advanced Metrics</Typography></Fade>
+          {paidUser == 1 && <React.Fragment><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Sentiment: {sentiment.label} ({(sentiment.score * 100).toFixed(2)}% Confidence)</Typography></Fade>
+          <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>Hate Speech: {hate.label} ({(hate.score * 100).toFixed(2)}% Confidence)</Typography></Fade>
+          <Fade><Typography variant="body2" color="text.secondary" sx={{marginTop: 1, textAlign: 'left'}}>To succeed in the algorithm and attract users, your toots should be nonviolent and factual.</Typography></Fade></React.Fragment>}
+          
+          {paidUser == 0 && <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}><Link href="/upgrade">Upgrade your account</Link> to access advanced metrics.</Typography></Fade>}
+          {paidUser == 2 && <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left'}}>It seems there was an error with processing your account's status. Consider reloading and trying again?</Typography></Fade>}
+          
+          <Divider sx={{marginTop: 1}}/>
+          {paidUser == 1 && uses > 0 && loadState != 3 && <Button onClick={RefineTweet} variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
+          {paidUser == 0 && <Button href="/upgrade" variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
+          {paidUser == 2 || uses == 0 || loadState == 3 && <Button disabled variant="outlined" sx={{height: 55, marginTop:2}}><Typography variant="body1">Refine</Typography></Button>}
         </Paper>}
         </Element>
 
         <Element name="secondResult">
           {loadState > 2 && <React.Fragment><Paper variant="outlined" sx={{marginTop: 3, width: '30%', p: 2.5, flexDirection: 'row', overflow: 'auto', marginLeft: '46.5%'}}>
+          <Typography variant="body2" color="text.secondary" sx={{marginTop: 1, marginBottom: 2}}>{uses} uses left this month {uses == 0 && " - will replenish by the start of next month"}</Typography>
+          {refinedText.map(message => (<><Divider/><Fade><Typography variant="h5" sx={{marginTop: 1, textAlign: 'left'}}>Iteration {message.index}</Typography></Fade><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1, marginBottom: 1}}>{message.text}</Typography></Fade><Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1, marginBottom: 1}}>Engagement Rate: {(message.engagement*100).toFixed(2)}%</Typography></Fade></>))}
           {loadState == 3 && <React.Fragment><CircularProgress/><Typography variant="body2" color="text.secondary" sx={{marginTop: 1}}>Generating... Please Wait...</Typography></React.Fragment>}
-          {loadState == 4 && <React.Fragment>
-            <Fade><Typography variant="body2" color="text.secondary" sx={{textAlign: 'left', marginTop: 1}}>{refinedText}</Typography></Fade></React.Fragment>}
+
           </Paper>
           </React.Fragment>}
           </Element>
