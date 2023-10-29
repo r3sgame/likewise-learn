@@ -7,6 +7,7 @@ import { authentication } from "./firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
+import { isMobile } from "react-device-detect";
 
 const stripePromise = loadStripe("pk_test_51NZxrZCKDHE02IcOq0XtXAYg0sAxuzXXpOwgyeMdI76Fvn6WnFxTQS7wDI8FQISddzOnzEtXTSIAljvXtSqH25tw00lST8aNAo");
 
@@ -93,18 +94,18 @@ function App() {
     <BrowserRouter>
     {user != null && paidUser == 0 && <Routes>
     <Route path="/" exact element={<React.Fragment><Home/></React.Fragment>} />
-    <Route path="/twitter" exact element={<React.Fragment><SideMenu/><Twitter /></React.Fragment>} />
-    <Route path="/mastodon" exact element={<React.Fragment><SideMenu/><Mastodon /></React.Fragment>} />
-    <Route path="/dashboard" exact element={<React.Fragment><SideMenu/><Dashboard /></React.Fragment>} />
-    <Route path="/upgrade" exact element={<React.Fragment><SideMenu/><Pricing /></React.Fragment>} />
+    <Route path="/twitter" exact element={<React.Fragment>{!isMobile && <SideMenu/>}<Twitter /></React.Fragment>} />
+    <Route path="/mastodon" exact element={<React.Fragment>{!isMobile && <SideMenu/>}<Mastodon /></React.Fragment>} />
+    <Route path="/dashboard" exact element={<React.Fragment>{!isMobile && <SideMenu/>}<Dashboard /></React.Fragment>} />
+    <Route path="/upgrade" exact element={<React.Fragment>{!isMobile && <SideMenu/>}<Pricing /></React.Fragment>} />
     <Route path="/checkout" exact element={<Elements stripe={stripePromise}><SideMenu/><Checkout /></Elements>} />
 </Routes>}
 
 {user != null && paidUser != 0 && <Routes>
     <Route path="/" exact element={<React.Fragment><Home/></React.Fragment>} />
-    <Route path="/twitter" exact element={<React.Fragment><SideMenu/><Twitter /></React.Fragment>} />
-    <Route path="/mastodon" exact element={<React.Fragment><SideMenu/><Mastodon /></React.Fragment>} />
-    <Route path="/dashboard" exact element={<React.Fragment><SideMenu/><Dashboard /></React.Fragment>} />
+    <Route path="/twitter" exact element={<React.Fragment>{!isMobile && <SideMenu/>}<Twitter /></React.Fragment>} />
+    <Route path="/mastodon" exact element={<React.Fragment>{!isMobile && <SideMenu/>}<Mastodon /></React.Fragment>} />
+    <Route path="/dashboard" exact element={<React.Fragment>{!isMobile && <SideMenu/>}<Dashboard /></React.Fragment>} />
 </Routes>}
 
 {user == null &&<Routes>

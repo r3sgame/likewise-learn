@@ -25,7 +25,7 @@ import { CardElement, Elements, PaymentElement, useElements, useStripe } from "@
 import { loadStripe } from "@stripe/stripe-js";
 import { collection, doc, getDocs, getFirestore, setDoc, where } from "firebase/firestore";
 
-const stripePromise = loadStripe('pk_test_51NZxrZCKDHE02IcOq0XtXAYg0sAxuzXXpOwgyeMdI76Fvn6WnFxTQS7wDI8FQISddzOnzEtXTSIAljvXtSqH25tw00lST8aNAo');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_TEST_KEY);
 
 export function SideMenu() {
 
@@ -39,7 +39,7 @@ export function SideMenu() {
   
   const checkPaidUser = async () => {
     setPaidUser(2);
-    const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
@@ -263,11 +263,13 @@ export function Twitter() {
 
   const myCollection = collection(db, "subscriptions");
   const q = query(myCollection, where("email", "==", authentication.currentUser.email));
+
+  const currentDate = new Date();
   
   const checkPaidUser = async () => {
     setPaidUser(2);
 
-    const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
@@ -278,7 +280,16 @@ export function Twitter() {
     const querySnapshot = await getDocs(q);
 
     try {
-      setUses(querySnapshot.docs[0].data().uses);
+      if(querySnapshot.docs[0].data().month == currentDate.getMonth()) {
+        setUses(querySnapshot.docs[0].data().uses);
+      } else {
+        setUses(200)
+        await setDoc(doc(db, "subscriptions", authentication.currentUser.email), {
+        email: authentication.currentUser.email,
+        uses: 200,
+        month: currentDate.getMonth()
+      });
+      }
       setPaidUser(1);
     } catch (e) {
       console.error("Error getting document: ", e);
@@ -302,7 +313,7 @@ export function Twitter() {
     setLoadState(1);
    try{
     let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
-      let extraction = await axios.post('http://localhost:5000/vectorize', {
+      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', {
         "key": import.meta.env.VITE_EXTRACTOR_KEY,
         "text": text
       })
@@ -317,7 +328,7 @@ export function Twitter() {
       
       if(paidUser == 1){
         const advancedResponse = await axios.post(
-          "http://localhost:5000/advanced",
+          import.meta.env.VITE_API_LINK + "/advanced",
           {"key": import.meta.env.VITE_EXTRACTOR_KEY, "text": text}
         );
 
@@ -365,7 +376,7 @@ export function Twitter() {
 
     let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
 
-    let extraction = await axios.post('http://localhost:5000/vectorize', {
+    let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "text": message
     })
@@ -391,7 +402,7 @@ export function Twitter() {
 
       message = message.choices[0].message.content
 
-      let extraction = await axios.post('http://localhost:5000/vectorize', {
+      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "text": message
     })
@@ -731,7 +742,7 @@ export function Dashboard() {
   
   const checkPaidUser = async () => {
     setPaidUser(2);
-    const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
@@ -829,6 +840,9 @@ export function Checkout() {
   const stripe = useStripe();
   const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const currentDate = new Date();
 
   const navigate = useNavigate();
 
@@ -837,19 +851,23 @@ export function Checkout() {
       await setDoc(doc(db, "subscriptions", authentication.currentUser.email), {
         email: authentication.currentUser.email,
         uses: 200,
+        month: currentDate.getMonth()
       });
 
-      const response = await axios.post('http://localhost:5000/create-test-customer-and-subscription', {
+      const response = await axios.post(import.meta.env.VITE_API_LINK + '/create-test-customer-and-subscription', {
         "email": email,
         "paymentId": paymentId,
       });
   
       console.log(response.data);
-    } catch (error) {
-      console.error(`Error: ${error}`);
-    }
+    
     setIsLoading(false)
     navigate("/dashboard")
+  } catch (error) {
+    setError("There was an error processing your subscription... Ensure your card is valid and try again.")
+    setIsLoading(false);
+    console.error(`Error: ${error}`);
+  }
   };
 
   const handleSubmit = async (event) => {
@@ -875,10 +893,23 @@ export function Checkout() {
         <CardElement options={{style: {base: {color: "#fff"}}}}/>
 
        {stripe && !isLoading && <Button sx={{marginTop: 1}} variant="outlined" onClick={handleSubmit}><Typography color="inherit" variant="body2">Subscribe</Typography></Button>}
-       {!stripe || isLoading && <Button sx={{marginTop: 1}} variant="outlined" onClick={handleSubmit} disabled><Typography color="inherit" variant="body2">Subscribe</Typography></Button>}
+       {!stripe || isLoading && <Button sx={{marginTop: 1}} variant="outlined" disabled><Typography color="inherit" variant="body2">Subscribe</Typography></Button>}
        <br/>
        {isLoading && <CircularProgress sx={{marginTop: 1}}/>}
-       <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 1}}>Upon successful registration, you will be redirected to the dashboard. You can then enjoy premium features! Billing is $6.99/month, with a 7-day free trial. You can cancel at any time through the dashboard. If you are reactivating your subscription, your billing will pick up from where it left off.</Typography>
+       <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 2}}>{error}</Typography>
+       <Divider sx={{marginTop: 1}}/>
+       <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 1}}>Upon successful registration, you will be redirected to the dashboard. You can then enjoy premium features!</Typography>
+       <List>
+        <ListItem>
+        <ListItemText>- Billing is $6.99/month with a 7-day free trial.</ListItemText>
+      </ListItem>
+      <ListItem>
+        <ListItemText>- You can cancel at any time through the dashboard.</ListItemText>
+      </ListItem>
+      <ListItem>
+        <ListItemText>- If you are reactivating your subscription, your billing will pick up from where it left off.</ListItemText>
+      </ListItem>
+    </List>
       </Paper>
     </React.Fragment>
   )
