@@ -27,6 +27,14 @@ import { collection, doc, getDocs, getFirestore, setDoc, where } from "firebase/
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_TEST_KEY);
 
+const headers = {headers: {
+  'Origin': 'https://likewise-learn.web.app',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+}}
+
 export function SideMenu() {
 
   const navigate = useNavigate();
@@ -39,7 +47,7 @@ export function SideMenu() {
   
   const checkPaidUser = async () => {
     setPaidUser(2);
-    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', headers, {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
@@ -269,7 +277,7 @@ export function Twitter() {
   const checkPaidUser = async () => {
     setPaidUser(2);
 
-    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', headers, {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
@@ -313,7 +321,7 @@ export function Twitter() {
     setLoadState(1);
    try{
     let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
-      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', {
+      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
         "key": import.meta.env.VITE_EXTRACTOR_KEY,
         "text": text
       })
@@ -376,7 +384,7 @@ export function Twitter() {
 
     let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
 
-    let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', {
+    let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "text": message
     })
@@ -402,7 +410,7 @@ export function Twitter() {
 
       message = message.choices[0].message.content
 
-      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', {
+      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "text": message
     })
@@ -518,7 +526,7 @@ export function Mastodon() {
   const checkPaidUser = async () => {
     setPaidUser(2);
 
-    const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', headers, {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
@@ -552,8 +560,8 @@ export function Mastodon() {
   async function Predict() {
     setLoadState(1);
    try{
-    let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
-      let extraction = await axios.post('http://localhost:5000/vectorize', {
+    let model = await tf.loadLayersModel('likewise-learn.web.app/models/v0.8js/model.json');
+      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
         "key": import.meta.env.VITE_EXTRACTOR_KEY,
         "text": text
       })
@@ -616,7 +624,7 @@ export function Mastodon() {
 
     let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
 
-    let extraction = await axios.post('http://localhost:5000/vectorize', {
+    let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "text": message
     })
@@ -642,7 +650,7 @@ export function Mastodon() {
 
       message = message.choices[0].message.content
 
-      let extraction = await axios.post('http://localhost:5000/vectorize', {
+      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "text": message
     })
@@ -742,10 +750,14 @@ export function Dashboard() {
   
   const checkPaidUser = async () => {
     setPaidUser(2);
-    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', {
-      "key": import.meta.env.VITE_EXTRACTOR_KEY,
-      "email": authentication.currentUser.email
-    })
+    try {
+      const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', headers, {
+        "key": import.meta.env.VITE_EXTRACTOR_KEY,
+        "email": authentication.currentUser.email
+      })
+    } catch (error) {
+      console.log(error)
+    }
   
     if(isPaidUser.data.result == "true") {
       setPaidUser(1);
@@ -854,7 +866,7 @@ export function Checkout() {
         month: currentDate.getMonth()
       });
 
-      const response = await axios.post(import.meta.env.VITE_API_LINK + '/create-test-customer-and-subscription', {
+      const response = await axios.post(import.meta.env.VITE_API_LINK + '/create-test-customer-and-subscription', headers, {
         "email": email,
         "paymentId": paymentId,
       });

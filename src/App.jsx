@@ -8,8 +8,9 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { isMobile } from "react-device-detect";
+import axios from "axios";
 
-const stripePromise = loadStripe("pk_test_51NZxrZCKDHE02IcOq0XtXAYg0sAxuzXXpOwgyeMdI76Fvn6WnFxTQS7wDI8FQISddzOnzEtXTSIAljvXtSqH25tw00lST8aNAo");
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PROD_KEY);
 
 function App() {
 
@@ -66,13 +67,21 @@ function App() {
   const [user, loading, error] = useAuthState(authentication);
 
   const [paidUser, setPaidUser] = useState(2);
+
+  const headers = {headers: {
+    'Origin': 'https://likewise-learn.web.app',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+  }}
   
   const checkPaidUser = async () => {
     setPaidUser(2);
     if (user == null) {
       setPaidUser(0);
     } else {
-    const isPaidUser = await axios.post('http://localhost:5000/get-customer', {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', headers, {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
