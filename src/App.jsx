@@ -81,7 +81,7 @@ function App() {
     if (user == null) {
       setPaidUser(0);
     } else {
-    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', headers, {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer/', {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })

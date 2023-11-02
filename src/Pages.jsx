@@ -47,7 +47,7 @@ export function SideMenu() {
   
   const checkPaidUser = async () => {
     setPaidUser(2);
-    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', headers, {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer/',  {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
@@ -277,7 +277,7 @@ export function Twitter() {
   const checkPaidUser = async () => {
     setPaidUser(2);
 
-    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', headers, {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer/',  {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
@@ -320,8 +320,8 @@ export function Twitter() {
   async function Predict() {
     setLoadState(1);
    try{
-    let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
-      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
+    let model = await tf.loadLayersModel('https://likewise-learn.web.app/models/v0.8js/model.json');
+      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize/',  {
         "key": import.meta.env.VITE_EXTRACTOR_KEY,
         "text": text
       })
@@ -382,9 +382,9 @@ export function Twitter() {
     console.log(message)
     message = await message.choices[0].message.content
 
-    let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
+    let model = await tf.loadLayersModel('https://likewise-learn.web.app/models/v0.8js/model.json');
 
-    let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
+    let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize/',  {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "text": message
     })
@@ -410,7 +410,7 @@ export function Twitter() {
 
       message = message.choices[0].message.content
 
-      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
+      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize/',  {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "text": message
     })
@@ -526,7 +526,7 @@ export function Mastodon() {
   const checkPaidUser = async () => {
     setPaidUser(2);
 
-    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', headers, {
+    const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer/',  {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "email": authentication.currentUser.email
     })
@@ -561,7 +561,7 @@ export function Mastodon() {
     setLoadState(1);
    try{
     let model = await tf.loadLayersModel('likewise-learn.web.app/models/v0.8js/model.json');
-      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
+      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize/',  {
         "key": import.meta.env.VITE_EXTRACTOR_KEY,
         "text": text
       })
@@ -576,7 +576,7 @@ export function Mastodon() {
       
       if(paidUser == 1){
         const advancedResponse = await axios.post(
-          "http://localhost:5000/advanced",
+          import.meta.env.VITE_API_LINK + "/advanced",
           {"key": import.meta.env.VITE_EXTRACTOR_KEY, "text": text}
         );
 
@@ -622,9 +622,9 @@ export function Mastodon() {
     console.log(message)
     message = await message.choices[0].message.content
 
-    let model = await tf.loadLayersModel('http://localhost:5173/models/v0.8js/model.json');
+    let model = await tf.loadLayersModel('https://likewise-learn.web.app/models/v0.8js/model.json');
 
-    let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
+    let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize/',  {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "text": message
     })
@@ -650,7 +650,7 @@ export function Mastodon() {
 
       message = message.choices[0].message.content
 
-      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize', headers, {
+      let extraction = await axios.post(import.meta.env.VITE_API_LINK + '/vectorize/',  {
       "key": import.meta.env.VITE_EXTRACTOR_KEY,
       "text": message
     })
@@ -750,14 +750,10 @@ export function Dashboard() {
   
   const checkPaidUser = async () => {
     setPaidUser(2);
-    try {
-      const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer', headers, {
+      const isPaidUser = await axios.post(import.meta.env.VITE_API_LINK + '/get-customer/',  {
         "key": import.meta.env.VITE_EXTRACTOR_KEY,
         "email": authentication.currentUser.email
       })
-    } catch (error) {
-      console.log(error)
-    }
   
     if(isPaidUser.data.result == "true") {
       setPaidUser(1);
@@ -822,7 +818,7 @@ export function Pricing() {
       </ListItem>
       <ListItem>
         <ListItemIcon><LocalOfferTwoTone/></ListItemIcon>
-        <ListItemText>$7.00/month (7-day free trial)</ListItemText>
+        <ListItemText>$6.99/month (3-day free trial)</ListItemText>
       </ListItem>
     </List>
         <Divider/>
@@ -866,7 +862,7 @@ export function Checkout() {
         month: currentDate.getMonth()
       });
 
-      const response = await axios.post(import.meta.env.VITE_API_LINK + '/create-test-customer-and-subscription', headers, {
+      const response = await axios.post(import.meta.env.VITE_API_LINK + '/create-test-customer-and-subscription/',  {
         "email": email,
         "paymentId": paymentId,
       });
@@ -894,6 +890,9 @@ export function Checkout() {
 
     if (!error) {
       subscribe(authentication.currentUser.email, paymentMethod.id);
+    } else {
+      setError("There was an error processing your subscription... Ensure your card is valid and try again.")
+      setIsLoading(false)
     }
   };
 
@@ -913,7 +912,7 @@ export function Checkout() {
        <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 1}}>Upon successful registration, you will be redirected to the dashboard. You can then enjoy premium features!</Typography>
        <List>
         <ListItem>
-        <ListItemText>- Billing is $6.99/month with a 7-day free trial.</ListItemText>
+        <ListItemText>- Billing is $6.99/month with a 3-day free trial.</ListItemText>
       </ListItem>
       <ListItem>
         <ListItemText>- You can cancel at any time through the dashboard.</ListItemText>
