@@ -785,6 +785,7 @@ export function Dashboard() {
         {paidUser == 1 && <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 1}}>Premium Plan: <Link href="https://billing.stripe.com/p/login/test_cN2dTvbEl6L7e1q9AA">Manage/Cancel Payment Plan</Link></Typography>}
         {paidUser == 0 && <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 1}}>Free plan: <Link href="/upgrade">Upgrade Account</Link></Typography>}
         {paidUser == 2 && <CircularProgress sx={{marginTop: 1}}/>}
+        <Typography variant="body2" color="secondary" sx={{textAlign: 'left', marginTop: 1}}>If you have any questions or concerns, please Email <Link href="mailto:r3s.softlocke@gmail.com">r3s.softlocke@gmail.com</Link>.</Typography>
       </Paper>
     </React.Fragment>
   )
